@@ -10,8 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 # Parameters
-Lx, Lz = (2, 1)
+Lx, Lz = (78.3, 26.1)
 ν = 1e-5 #
+χ = 1e-5 # Thermal diffusivity
 Prandtl = 1 
 R = 287.058 #
 g = -9.81 # m/s**2
@@ -25,40 +26,43 @@ x_basis = de.Fourier('x', 256, interval=(0, Lx), dealias=3/2)
 z_basis = de.Chebyshev('z', 256, interval=(0, Lz), dealias=3/2)
 domain = de.Domain([x_basis, z_basis], grid_dtype=np.float64)
 
-# Compressible NS
-#problem = de.IVP(domain, variables=['w','wz','u','uz','S','Sz','ρ','ρz','P','T','Tz','lnT','lnTz'])
-problem = de.IVP(domain, variables=['u', 'uz', 'w', 'wz', 'Y', 'T',' S', 'Qz', 'lnρ'])
+#--------
+# Define variables
+problem = de.IVP(domain, variables=['u', 'uz', 'w', 'wz', 'Y', 'T','Sp', 'Qz', 'lnρ', 'ρ'])
+problem.add_equation("ρ = exp(lnρ)")
+#--------
 
-# initially Unstable stratification
+#--------
+# IC
 z = domain.grid(1)
-ρ0 = 1.2
-P0 = 50 + ρ0*g*z
+T0 = 1
+ρ0 = 1
+P0 = 1
+H = 1
+n = 2 # polytropic index
 u0, w0, uz0, wz0 = 0, 0, 0, 0
+#--------
 
+#--------
+# Define parameters
 problem.parameters['g']  = g
 problem.parameters['ν'] = ν
-problem.parameters['κ'] = Prandtl*ν
+problem.parameters['χ'] = χ
 problem.parameters['R'] = R
-problem.parameters['ρ0'] = ρ0
 problem.parameters['γ'] = γ
 problem.parameters['Cp'] = Cp
+problem.parameters['T0'] = T0
+problem.parameters['ρ0'] = ρ0
+problem.parameters['Lz'] = Lz
+problem.parameters['H'] = H
+#--------
 
+#--------
+problem.substitutions["T_mean"] = "T0*(Lz+H-z)/H"
+problem.substitutions["ρ_mean"] = ρ0*((Lz+H-z)/H)**n
+problem.substitutions["P_mean"] = P0*((Lz+H-z)/H)**(n-1)
+#--------
 
-problem.substitutions["Πxx"] = "2*dx(u) - 2/3*(dx(u) + wz)"
-problem.substitutions["Πzz"] = "2*dz(w) - 2/3*(dx(u) + wz)"
-problem.substitutions["Πxz"] = "dx(u) + wz"
-problem.substitutions["Πzx"] = "dx(u) + wz"
-
-
-problem.add_equation("dz(u) - uz = 0")
-problem.add_equation("dz(w) - wz = 0")
-problem.add_equation("dz(S) - Sz = 0")
-problem.add_equation("dz(ρ) - ρz = 0")
-problem.add_equation("dz(T) - Tz = 0")
-#problem.add_equation("dz(lnT) - lnTz = 0")
-problem.add_equation("ρ - exp(lnρ) = 0")
-problem.add_equation("P = (50 + ρ0*g*z)*(1+γ)*(S/Cp + (ρ-ρ0)/ρ0)")
-problem.add_equation("T = P / R*ρ")
 
 #--------
 # Eq D1
@@ -87,17 +91,20 @@ problem.add_equation("dt(Y) + w*dz(lnρ) + dx(u) + wz \
 problem.substitutions["D4p1"] = "dx(dx(T)) - dz(Qz) - Qz*dz(lnρ)"
 problem.substitutions["D4p2"] = "dx(T)*dx(Y) - Qz*dz(Y)"
 problem.substitutions["D4p3"] = "2*(dx(u))**2 + (dx(w))**2 + uz**2 + 2*wz + 2*uz*dx(w) - 2/3*(dx(u) + wz)**2"
-STOPPED HERE
-problem.add_equation("dt(T) + w*dz(T_mean) + (γ-1)*T_mean*(dx(u) + wz) - χ/Cv*(D4p1) 
-                     = - u*dx(T) - w*dz(T)   + (κ/T)*(Tz*dz(ρ)/ρ + dx(T + (ν/T)*(Πzz*wz + Πxx*dx(u) + Πxz*uz + Πxz*dx(w))")
+problem.add_equation("dt(T) + w*dz(T_mean) + (γ-1)*T_mean*(dx(u) + wz) - χ/Cv*(D4p1) \
+                     = - u*dx(T) - w*dz(T) - (γ-1)*T*(dx(u) + wz) + χ/Cv*(D4p2) + \
+                     (ν/Cv)*(D4p3)")
 #--------
 
 #--------
 # Eq D5
+problem.add_equation("Qz + dz(T) = 0")
 #--------
 
 #--------
 # Eq D6
+problem.add_equation("Sp/Cp + T/(γ*T_mean) + 1/Cp*Y \
+                     = 1/γ*(log(1+T/T_mean) - T/T_mean)")
 #--------
 
 #--------
@@ -112,8 +119,6 @@ problem.add_equation("uz - dz(u) = 0")
 
 # Boundary conditions
 problem.add_bc("left(ρ) = 1.2")
-problem.add_bc("left(S) = 0")
-problem.add_bc("right(S) = 0")
 problem.add_bc("left(T) = 270.01")
 problem.add_bc("right(T) = 270.000")
 problem.add_bc("left(u) = 0")
