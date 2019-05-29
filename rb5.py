@@ -28,8 +28,7 @@ domain = de.Domain([x_basis, z_basis], grid_dtype=np.float64)
 
 #--------
 # Define variables
-problem = de.IVP(domain, variables=['u', 'uz', 'w', 'wz', 'Y', 'T','Sp', 'Qz', 'lnρ', 'ρ'])
-problem.add_equation("ρ = exp(lnρ)")
+problem = de.IVP(domain, variables=['u', 'uz', 'w', 'wz', 'Y', 'T','Sp', 'Qz', 'ρ'])
 #--------
 
 #--------
@@ -59,23 +58,31 @@ problem.parameters['H'] = H
 
 #--------
 problem.substitutions["T_mean"] = "T0*(Lz+H-z)/H"
-problem.substitutions["ρ_mean"] = ρ0*((Lz+H-z)/H)**n
-problem.substitutions["P_mean"] = P0*((Lz+H-z)/H)**(n-1)
+problem.substitutions["ρ_mean"] = "ρ0*((Lz+H-z)/H)**n"
+problem.substitutions["P_mean"] = "P0*((Lz+H-z)/H)**(n-1)"
+problem.substitutions["lnρ"] = "log(ρ_mean)"
 #--------
 
+#--------
+# Substitutions
+problem.substitutions["D1p1"] = "dx(dx(w)) + dz(wz) + 2*dz(lnρ)*wz + 1/3*(dx(uz) + dz(wz)) - 2/3*dz(lnρ)*(dx(u) + wz)"
+problem.substitutions["D1p2"] = "dz(dx(Y)) + 2*wz*dz(Y) + dx(w)*dx(Y) - 2/3*dz(Y)*(dx(u) + wz)"
+problem.substitutions["D2p1"] = "dx(dx(u)) + dz(uz) + dz(lnρ)*(uz + dx(w)) + 1/3*(dx(dx(u)) + dx(wz))"
+problem.substitutions["D2p2"] = "2*dx(u)dx(Y) + dx(w)*dz(Y) + uz*dz(Y) - 2/3*dx(Y)*(dx(u) + wz)"
+problem.substitutions["D4p1"] = "dx(dx(T)) - dz(Qz) - Qz*dz(lnρ)"
+problem.substitutions["D4p2"] = "dx(T)*dx(Y) - Qz*dz(Y)"
+problem.substitutions["D4p3"] = "2*(dx(u))**2 + (dx(w))**2 + uz**2 + 2*wz + 2*uz*dx(w) - 2/3*(dx(u) + wz)**2"
+#--------
 
 #--------
 # Eq D1
-problem.substitutions["D1p1"] = "dx(dx(w)) + dz(wz) + 2*dz(lnρ)*wz + 1/3*(dx(uz) + dz(wz)) - 2/3*dz(lnρ)*(dx(u) + wz)"
-problem.substitutions["D1p2"] = "dz(dx(Y)) + 2*wz*dz(Y) + dx(w)*dx(Y) - 2/3*dz(Y)*(dx(u) + wz)"
+problem.add_equation("ρ = exp(lnρ)")
 problem.add_equation("dt(w) + dz(T) + T_mean*dz(Y) + T*dz(lnρ) - ν*(D1p1) \
                      = -T*dz(Y) - u*dx(w) - w*wz   + ν*(D1p2)")
 #--------
 
 #--------
 # Eq D2
-problem.substitutions["D2p1"] = "dx(dx(u)) + dz(uz) + dz(lnρ)*(uz + dx(w)) + 1/3*(dx(dx(u)) + dx(wz))"
-problem.substitutions["D2p2"] = "2*dx(u)dx(Y) + dx(w)*dz(Y) + uz*dz(Y) - 2/3*dx(Y)*(dx(u) + wz)"
 problem.add_equation("dt(u) + dx(T) + T_mean*dx(Y) - ν*(D2p1) \
                      = -T*dx(Y) - u*dx(u) - w*uz + ν*(D2p2)")
 #--------
@@ -88,9 +95,6 @@ problem.add_equation("dt(Y) + w*dz(lnρ) + dx(u) + wz \
 
 #--------
 # Eq D4
-problem.substitutions["D4p1"] = "dx(dx(T)) - dz(Qz) - Qz*dz(lnρ)"
-problem.substitutions["D4p2"] = "dx(T)*dx(Y) - Qz*dz(Y)"
-problem.substitutions["D4p3"] = "2*(dx(u))**2 + (dx(w))**2 + uz**2 + 2*wz + 2*uz*dx(w) - 2/3*(dx(u) + wz)**2"
 problem.add_equation("dt(T) + w*dz(T_mean) + (γ-1)*T_mean*(dx(u) + wz) - χ/Cv*(D4p1) \
                      = - u*dx(T) - w*dz(T) - (γ-1)*T*(dx(u) + wz) + χ/Cv*(D4p2) + \
                      (ν/Cv)*(D4p3)")
