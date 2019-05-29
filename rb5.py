@@ -26,8 +26,8 @@ z_basis = de.Chebyshev('z', 256, interval=(0, Lz), dealias=3/2)
 domain = de.Domain([x_basis, z_basis], grid_dtype=np.float64)
 
 # Compressible NS
-problem = de.IVP(domain, variables=['w','wz','u','uz','S','Sz','ρ','ρz','P','T','Tz','lnT','lnTz'])
-problem = de.IVP(domain, variables=['w','wz','u','uz','S','Sz','ρ','ρz','P','T','Tz'])
+#problem = de.IVP(domain, variables=['w','wz','u','uz','S','Sz','ρ','ρz','P','T','Tz','lnT','lnTz'])
+problem = de.IVP(domain, variables=['u', 'uz', 'w', 'wz', 'Y', 'T',' S', 'Qz', 'lnρ'])
 
 # initially Unstable stratification
 z = domain.grid(1)
@@ -56,30 +56,40 @@ problem.add_equation("dz(S) - Sz = 0")
 problem.add_equation("dz(ρ) - ρz = 0")
 problem.add_equation("dz(T) - Tz = 0")
 #problem.add_equation("dz(lnT) - lnTz = 0")
-#problem.add_equation("T = exp(lnT)")
+problem.add_equation("ρ - exp(lnρ) = 0")
 problem.add_equation("P = (50 + ρ0*g*z)*(1+γ)*(S/Cp + (ρ-ρ0)/ρ0)")
 problem.add_equation("T = P / R*ρ")
 
 #--------
 # Eq D1
-problem.substitutions("D1p") = "dx(dx(w)) + dz(wz) + 2*dz(lnρ)*wz + 1/3*(dx(uz) + dz(wz)) - 2/3*dz(lnρ)*(dx(u) + wz)"
-problem.add_equation("dt(w) + ν*dz(Πzx) - ν*dx(Πzz)         = - u*dx(w) - w*dz(w)   + dz(P)     + ν*Πzx*dx(ρ)/ρ + ν*Πzz*dz(ρ)/ρ")
+problem.substitutions["D1p1"] = "dx(dx(w)) + dz(wz) + 2*dz(lnρ)*wz + 1/3*(dx(uz) + dz(wz)) - 2/3*dz(lnρ)*(dx(u) + wz)"
+problem.substitutions["D1p2"] = "dz(dx(Y)) + 2*wz*dz(Y) + dx(w)*dx(Y) - 2/3*dz(Y)*(dx(u) + wz)"
+problem.add_equation("dt(w) + dz(T) + T_mean*dz(Y) + T*dz(lnρ) - ν*(D1p1) \
+                     = -T*dz(Y) - u*dx(w) - w*wz   + ν*(D1p2)")
 #--------
 
 #--------
 # Eq D2
-problem.add_equation("dt(u) - ν*dx(Πxx) - ν*dz(Πxz)         = - u*dx(u) - w*dz(u)   + dx(P)     + ν*Πxx*dx(ρ)/ρ + ν*Πxz*dz(ρ)/ρ")
+problem.substitutions["D2p1"] = "dx(dx(u)) + dz(uz) + dz(lnρ)*(uz + dx(w)) + 1/3*(dx(dx(u)) + dx(wz))"
+problem.substitutions["D2p2"] = "2*dx(u)dx(Y) + dx(w)*dz(Y) + uz*dz(Y) - 2/3*dx(Y)*(dx(u) + wz)"
+problem.add_equation("dt(u) + dx(T) + T_mean*dx(Y) - ν*(D2p1) \
+                     = -T*dx(Y) - u*dx(u) - w*uz + ν*(D2p2)")
 #--------
 
 #--------
 # Eq D3
-problem.add_equation("dt(ρ)                                 = - dz(w*ρ) - dx(u*ρ)")
+problem.add_equation("dt(Y) + w*dz(lnρ) + dx(u) + wz \
+                     = - u*dx(Y) - w*dz(Y)")
 #--------
 
 #--------
 # Eq D4
-problem.add_equation("dt(S) - κ*(dz(Tz) + dx(dx(T)))/T    = - u*dx(T) - w*dz(T)   + (κ/T)*(Tz*dz(ρ)/ρ + dx(T)*dx(ρ)/ρ) \
-                                                                                    + (ν/T)*(Πzz*wz + Πxx*dx(u) + Πxz*uz + Πxz*dx(w))")
+problem.substitutions["D4p1"] = "dx(dx(T)) - dz(Qz) - Qz*dz(lnρ)"
+problem.substitutions["D4p2"] = "dx(T)*dx(Y) - Qz*dz(Y)"
+problem.substitutions["D4p3"] = "2*(dx(u))**2 + (dx(w))**2 + uz**2 + 2*wz + 2*uz*dx(w) - 2/3*(dx(u) + wz)**2"
+STOPPED HERE
+problem.add_equation("dt(T) + w*dz(T_mean) + (γ-1)*T_mean*(dx(u) + wz) - χ/Cv*(D4p1) 
+                     = - u*dx(T) - w*dz(T)   + (κ/T)*(Tz*dz(ρ)/ρ + dx(T + (ν/T)*(Πzz*wz + Πxx*dx(u) + Πxz*uz + Πxz*dx(w))")
 #--------
 
 #--------
@@ -92,10 +102,12 @@ problem.add_equation("dt(S) - κ*(dz(Tz) + dx(dx(T)))/T    = - u*dx(T) - w*dz(T)
 
 #--------
 # Eq D7
+problem.add_equation("wz - dz(w) = 0")
 #--------
 
 #--------
 # Eq D8
+problem.add_equation("uz - dz(u) = 0")
 #--------
 
 # Boundary conditions
