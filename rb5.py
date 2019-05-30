@@ -20,7 +20,7 @@ Cp = 1.003 # kJ/kg*K
 Cv = .7176 # kJ/kg*K
 γ = 5/3
 tstop = 100       # simulation stop time
-tstop_wall = 50 
+tstop_wall = 50
 
 # Create bases and domain
 x_basis = de.Fourier('x', 256, interval=(0, Lx), dealias=3/2)
@@ -127,22 +127,17 @@ uz = solver.state['uz']
 w = solver.state['w']
 wz = solver.state['wz']
 
-solver.evaluator.vars['Lx'] = Lx
-solver.evaluator.vars['Lz'] = Lz
-
 
 # Initial conditions
 u['g'] = u0
 w['g'] = w0
 Y['g'] = ρ0
 T['g'] = T0
-P['g'] = P0
-ρz['g'] = 0
 uz['g'] = 0
 wz['g'] = 0
 
 
-logger.info("ρ = {:g} -- {:g}".format(np.min(ρ['g']), np.max(ρ['g'])))
+logger.info("Y = {:g} -- {:g}".format(np.min(Y['g']), np.max(Y['g'])))
 logger.info("T = {:g} -- {:g}".format(np.min(T['g']), np.max(T['g'])))
 
 
@@ -157,11 +152,11 @@ solver.stop_iteration = np.inf
 # Analysis
 snapshots = solver.evaluator.add_file_handler('snapshots', iter=1, max_writes=50)
 snapshots.add_task('T')
+snapshots.add_task('u')
 snapshots.add_task('w')
+snapshots.add_task('Y')
+snapshots.add_task('uz')
 snapshots.add_task('wz')
-snapshots.add_task('P', name='P')
-snapshots.add_task('ρ', name='ρ')
-snapshots.add_task('u', name='u')
 
 # CFL
 CFL = flow_tools.CFL(solver, initial_dt=dt, cadence=10, safety=1,
