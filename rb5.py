@@ -17,6 +17,7 @@ Prandtl = 1
 R = 287.058 #
 g = -9.81 # m/s**2
 Cp = 1.003 # kJ/kg*K
+Cv = .7176 # kJ/kg*K
 γ = 5/3
 tstop = 100       # simulation stop time
 tstop_wall = 50 
@@ -28,7 +29,7 @@ domain = de.Domain([x_basis, z_basis], grid_dtype=np.float64)
 
 #--------
 # Define variables
-problem = de.IVP(domain, variables=['u', 'uz', 'w', 'wz', 'Y', 'T','Sp', 'Qz', 'ρ'])
+problem = de.IVP(domain, variables=['u', 'uz', 'w', 'wz', 'Y', 'T', 'Sp', 'Qz'])
 #--------
 
 #--------
@@ -50,7 +51,9 @@ problem.parameters['χ'] = χ
 problem.parameters['R'] = R
 problem.parameters['γ'] = γ
 problem.parameters['Cp'] = Cp
+problem.parameters['Cv'] = Cv
 problem.parameters['T0'] = T0
+problem.parameters['P0'] = P0
 problem.parameters['ρ0'] = ρ0
 problem.parameters['Lz'] = Lz
 problem.parameters['H'] = H
@@ -69,7 +72,7 @@ problem.substitutions["lnρ"] = "log(ρ_mean)"
 problem.substitutions["D1p1"] = "dx(dx(w)) + dz(wz) + 2*dz(lnρ)*wz + 1/3*(dx(uz) + dz(wz)) - 2/3*dz(lnρ)*(dx(u) + wz)"
 problem.substitutions["D1p2"] = "dz(dx(Y)) + 2*wz*dz(Y) + dx(w)*dx(Y) - 2/3*dz(Y)*(dx(u) + wz)"
 problem.substitutions["D2p1"] = "dx(dx(u)) + dz(uz) + dz(lnρ)*(uz + dx(w)) + 1/3*(dx(dx(u)) + dx(wz))"
-problem.substitutions["D2p2"] = "2*dx(u)dx(Y) + dx(w)*dz(Y) + uz*dz(Y) - 2/3*dx(Y)*(dx(u) + wz)"
+problem.substitutions["D2p2"] = "2*dx(u)*dx(Y) + dx(w)*dz(Y) + uz*dz(Y) - 2/3*dx(Y)*(dx(u) + wz)"
 problem.substitutions["D4p1"] = "dx(dx(T)) - dz(Qz) - Qz*dz(lnρ)"
 problem.substitutions["D4p2"] = "dx(T)*dx(Y) - Qz*dz(Y)"
 problem.substitutions["D4p3"] = "2*(dx(u))**2 + (dx(w))**2 + uz**2 + 2*wz + 2*uz*dx(w) - 2/3*(dx(u) + wz)**2"
@@ -117,15 +120,12 @@ logger.info('Solver built')
 
 x = domain.grid(0)
 z = domain.grid(1)
-ρ = solver.state['ρ']
-ρz = solver.state['ρz']
+Y = solver.state['Y']
 T = solver.state['T']
-Tz = solver.state['Tz']
 u = solver.state['u']
 uz = solver.state['uz']
 w = solver.state['w']
 wz = solver.state['wz']
-P = solver.state['P']
 
 solver.evaluator.vars['Lx'] = Lx
 solver.evaluator.vars['Lz'] = Lz
@@ -134,11 +134,10 @@ solver.evaluator.vars['Lz'] = Lz
 # Initial conditions
 u['g'] = u0
 w['g'] = w0
-ρ['g'] = ρ0
-T['g'] = P0/(ρ0*R)
+Y['g'] = ρ0
+T['g'] = T0
 P['g'] = P0
 ρz['g'] = 0
-T.differentiate('z', out=Tz)
 uz['g'] = 0
 wz['g'] = 0
 
