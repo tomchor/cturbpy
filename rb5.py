@@ -54,6 +54,7 @@ problem.parameters['T0'] = T0
 problem.parameters['ρ0'] = ρ0
 problem.parameters['Lz'] = Lz
 problem.parameters['H'] = H
+problem.parameters['n'] = n
 #--------
 
 #--------
@@ -76,55 +77,33 @@ problem.substitutions["D4p3"] = "2*(dx(u))**2 + (dx(w))**2 + uz**2 + 2*wz + 2*uz
 
 #--------
 # Eq D1
-problem.add_equation("ρ = exp(lnρ)")
 problem.add_equation("dt(w) + dz(T) + T_mean*dz(Y) + T*dz(lnρ) - ν*(D1p1) \
                      = -T*dz(Y) - u*dx(w) - w*wz   + ν*(D1p2)")
-#--------
-
-#--------
 # Eq D2
 problem.add_equation("dt(u) + dx(T) + T_mean*dx(Y) - ν*(D2p1) \
                      = -T*dx(Y) - u*dx(u) - w*uz + ν*(D2p2)")
-#--------
-
-#--------
 # Eq D3
 problem.add_equation("dt(Y) + w*dz(lnρ) + dx(u) + wz \
                      = - u*dx(Y) - w*dz(Y)")
-#--------
-
-#--------
 # Eq D4
 problem.add_equation("dt(T) + w*dz(T_mean) + (γ-1)*T_mean*(dx(u) + wz) - χ/Cv*(D4p1) \
                      = - u*dx(T) - w*dz(T) - (γ-1)*T*(dx(u) + wz) + χ/Cv*(D4p2) + \
                      (ν/Cv)*(D4p3)")
-#--------
-
-#--------
 # Eq D5
 problem.add_equation("Qz + dz(T) = 0")
-#--------
-
-#--------
 # Eq D6
 problem.add_equation("Sp/Cp + T/(γ*T_mean) + 1/Cp*Y \
                      = 1/γ*(log(1+T/T_mean) - T/T_mean)")
-#--------
-
-#--------
 # Eq D7
 problem.add_equation("wz - dz(w) = 0")
-#--------
-
-#--------
 # Eq D8
 problem.add_equation("uz - dz(u) = 0")
 #--------
 
 # Boundary conditions
-problem.add_bc("left(ρ) = 1.2")
-problem.add_bc("left(T) = 270.01")
-problem.add_bc("right(T) = 270.000")
+problem.add_bc("left(Y) = 0")
+problem.add_bc("left(T) = 0")
+problem.add_bc("right(T) = 0")
 problem.add_bc("left(u) = 0")
 problem.add_bc("right(u) = 0")
 problem.add_bc("left(w) = 0")
