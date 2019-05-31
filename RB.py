@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 
 # Parameters
 Lx, Lz = (78.3, 26.1)
-ν = 1e-5 #
+ν = 1e-5 # Viscisity
 χ = 1e-5 # Thermal diffusivity
-Prandtl = 1 
+Prandtl = ν/χ 
 R = 287.058 #
 g = -9.81 # m/s**2
 Cp = 1.003 # kJ/kg*K
@@ -110,9 +110,9 @@ problem.add_equation("uz - dz(u) = 0")
 #--------
 
 # Boundary conditions
-problem.add_bc("left(Y) = 0")
-problem.add_bc("left(T) = 0")
-problem.add_bc("right(T) = 0")
+problem.add_bc("left(Y) = 1")
+problem.add_bc("left(dz(T)) = 0")
+problem.add_bc("right(dz(T)) = 0")
 problem.add_bc("left(u) = 0")
 problem.add_bc("right(u) = 0")
 problem.add_bc("left(w) = 0")
@@ -137,10 +137,10 @@ wz = solver.state['wz']
 # Initial conditions
 u['g'] = u0
 w['g'] = w0
-Y['g'] = ρ0
-T['g'] = T0
-uz['g'] = 0
-wz['g'] = 0
+Y['g'] = 1
+T['g'] = 0 + np.random.randn(*T['g'].shape)*1e-3
+uz['g'] = uz0
+wz['g'] = wz0
 
 
 logger.info("Y = {:g} -- {:g}".format(np.min(Y['g']), np.max(Y['g'])))
@@ -156,7 +156,7 @@ solver.stop_wall_time = tstop_wall
 solver.stop_iteration = np.inf
 
 # Analysis
-snapshots = solver.evaluator.add_file_handler('snapshots', iter=1, max_writes=50)
+snapshots = solver.evaluator.add_file_handler('snaps', iter=1, max_writes=50)
 snapshots.add_task('T')
 snapshots.add_task('u')
 snapshots.add_task('w')
