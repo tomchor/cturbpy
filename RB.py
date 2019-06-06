@@ -26,11 +26,11 @@ Cp = 1.003 # kJ/kg*K
 Cv = .7176 # kJ/kg*K
 γ = 5/3
 tstop = 100       # simulation stop time
-tstop_wall = 50
+tstop_wall = 24 * 60 * 60
 
 # Create bases and domain
 x_basis = de.Fourier('x', 128, interval=(0, Lx), dealias=3/2)
-z_basis = de.Chebyshev('z', 64, interval=(0, Lz), dealias=3/2)
+z_basis = de.Chebyshev('z', 128, interval=(0, Lz), dealias=3/2)
 domain = de.Domain([x_basis, z_basis], grid_dtype=np.float64)
 
 #--------
@@ -76,12 +76,14 @@ problem.substitutions["lnρ"] = "log(ρ_mean)"
 #--------
 # Substitutions
 problem.substitutions["D1p1"] = "dx(dx(w)) + dz(wz) + 2*dz(lnρ)*wz + 1/3*(dx(uz) + dz(wz)) - 2/3*dz(lnρ)*(dx(u) + wz)"
-problem.substitutions["D1p2"] = "dz(dx(Y)) + 2*wz*dz(Y) + dx(w)*dx(Y) - 2/3*dz(Y)*(dx(u) + wz)"
+problem.substitutions["D1p2"] = "uz*dx(Y) + 2*wz*dz(Y) + dx(w)*dx(Y) - 2/3*dz(Y)*(dx(u) + wz)"
+
 problem.substitutions["D2p1"] = "dx(dx(u)) + dz(uz) + dz(lnρ)*(uz + dx(w)) + 1/3*(dx(dx(u)) + dx(wz))"
 problem.substitutions["D2p2"] = "2*dx(u)*dx(Y) + dx(w)*dz(Y) + uz*dz(Y) - 2/3*dx(Y)*(dx(u) + wz)"
+
 problem.substitutions["D4p1"] = "dx(dx(T)) - dz(Qz) - Qz*dz(lnρ)"
 problem.substitutions["D4p2"] = "dx(T)*dx(Y) - Qz*dz(Y)"
-problem.substitutions["D4p3"] = "2*(dx(u))**2 + (dx(w))**2 + uz**2 + 2*wz + 2*uz*dx(w) - 2/3*(dx(u) + wz)**2"
+problem.substitutions["D4p3"] = "2*(dx(u))**2 + (dx(w))**2 + uz**2 + 2*(wz**2) + 2*uz*dx(w) - 2/3*(dx(u) + wz)**2"
 #--------
 
 #--------
@@ -93,16 +95,16 @@ problem.add_equation("dt(u) + dx(T) + T_mean*dx(Y) - ν*(D2p1) \
                      = -T*dx(Y) - u*dx(u) - w*uz + ν*(D2p2)")
 # Eq D3
 problem.add_equation("dt(Y) + w*dz(lnρ) + dx(u) + wz \
-                     = - u*dx(Y) - w*dz(Y)")
+                     = - u*dx(Y) - w*dz(Y)", tau=False)
 # Eq D4
 problem.add_equation("dt(T) + w*dz(T_mean) + (γ-1)*T_mean*(dx(u) + wz) - χ/Cv*(D4p1) \
-                     = - u*dx(T) - w*dz(T) - (γ-1)*T*(dx(u) + wz) + χ/Cv*(D4p2) + \
+                     = - u*dx(T) - w*dz(T) - (γ-1)*T*(dx(u) + wz)      + χ/Cv*(D4p2) + \
                      (ν/Cv)*(D4p3)")
 # Eq D5
 problem.add_equation("Qz + dz(T) = 0")
 # Eq D6
-problem.add_equation("Sp/Cp + T/(γ*T_mean) + 1/Cp*Y \
-                     = 1/γ*(log(1+T/T_mean) - T/T_mean)")
+problem.add_equation("Sp/Cp + T/(γ*T_mean) + (1/Cp)*Y \
+                     = (1/γ)*(log(1+T/T_mean) - T/T_mean)")
 # Eq D7
 problem.add_equation("wz - dz(w) = 0")
 # Eq D8
@@ -110,7 +112,7 @@ problem.add_equation("uz - dz(u) = 0")
 #--------
 
 # Boundary conditions
-problem.add_bc("left(Y) = 1")
+#problem.add_bc("left(Y) = 1")
 problem.add_bc("left(dz(T)) = 0")
 problem.add_bc("right(dz(T)) = 0")
 problem.add_bc("left(u) = 0")
