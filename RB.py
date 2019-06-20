@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Parameters
 Lx, Lz = (78.3, 26.1)
-ν = 1e-5 # Viscisity
+ν = 1e-5 # Viscosity
 χ = 1e-5 # Thermal diffusivity
 Prandtl = ν/χ 
 R = 287.058 #
@@ -29,8 +29,8 @@ tstop = 100       # simulation stop time
 tstop_wall = 24 * 60 * 60
 
 # Create bases and domain
-x_basis = de.Fourier('x', 128, interval=(0, Lx), dealias=3/2)
-z_basis = de.Chebyshev('z', 128, interval=(0, Lz), dealias=3/2)
+x_basis = de.Fourier('x', 256, interval=(0, Lx), dealias=3/2)
+z_basis = de.Chebyshev('z', 256, interval=(0, Lz), dealias=3/2)
 domain = de.Domain([x_basis, z_basis], grid_dtype=np.float64)
 
 #--------
