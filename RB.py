@@ -29,8 +29,9 @@ tstop = 100       # simulation stop time
 tstop_wall = 24 * 60 * 60
 
 # Create bases and domain
-x_basis = de.Fourier('x', 256, interval=(0, Lx), dealias=3/2)
-z_basis = de.Chebyshev('z', 256, interval=(0, Lz), dealias=3/2)
+N = 128
+x_basis = de.Fourier('x', N, interval=(0, Lx), dealias=3/2)
+z_basis = de.Chebyshev('z', N, interval=(0, Lz), dealias=3/2)
 domain = de.Domain([x_basis, z_basis], grid_dtype=np.float64)
 
 #--------
