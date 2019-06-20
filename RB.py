@@ -69,8 +69,8 @@ problem.parameters['n'] = n
 
 #--------
 problem.substitutions["T_mean"] = "T0" #"T0*(Lz+H-z)/H"
-problem.substitutions["ρ_mean"] = "ρ0*((Lz+H-z)/H)**n"
-problem.substitutions["P_mean"] = "P0*((Lz+H-z)/H)**(n-1)"
+problem.substitutions["ρ_mean"] = "ρ0" #"ρ0*((Lz+H-z)/H)**n"
+problem.substitutions["P_mean"] = "P0" #"P0*((Lz+H-z)/H)**(n-1)"
 problem.substitutions["lnρ"] = "log(ρ_mean)"
 #--------
 
@@ -113,14 +113,15 @@ problem.add_equation("uz - dz(u) = 0")
 #--------
 
 # Boundary conditions
-#problem.add_bc("left(Y) = 1")
-problem.add_bc("left(dz(T)) = 0")
-problem.add_bc("right(dz(T)) = 0")
+problem.add_bc("left(T) = 1/20")
+problem.add_bc("right(T) = -1/20")
 problem.add_bc("left(u) = 0")
 problem.add_bc("right(u) = 0")
 problem.add_bc("left(w) = 0")
 problem.add_bc("right(w) = 0")
 
+Ra = (1/300)*abs(g)*Lz**3*1/ν/χ
+print(f"Rayleigh Number = {Ra}")
 
 
 # Build solver
