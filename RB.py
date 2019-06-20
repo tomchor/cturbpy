@@ -67,7 +67,7 @@ problem.parameters['n'] = n
 #--------
 
 #--------
-problem.substitutions["T_mean"] = "T0*(Lz+H-z)/H"
+problem.substitutions["T_mean"] = "T0" #"T0*(Lz+H-z)/H"
 problem.substitutions["ρ_mean"] = "ρ0*((Lz+H-z)/H)**n"
 problem.substitutions["P_mean"] = "P0*((Lz+H-z)/H)**(n-1)"
 problem.substitutions["lnρ"] = "log(ρ_mean)"
